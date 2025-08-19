@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Copa Tesãi — Votación</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <img src="assets/logos/LOGO1.png" alt="Comité de Deportes"/>
+        <strong>Copa Tesãi</strong>
+        <span class="badge">Tecnología + Deporte</span>
+      </div>
+      <nav class="nav" id="tabs">
+        <button class="tab active" data-view="noti">Noti Deportes</button>
+        <button class="tab" data-view="votar">Votación</button>
+        <button class="tab" data-view="resultados">Resultados</button>
+        <button class="tab" data-view="equipos">Equipos</button>
+        <button class="tab" data-view="ayuda">Ayuda</button>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="kpi">
+        <div>
+          <div class="small">Votos registrados</div>
+          <div class="n" id="kpi-votos">—</div>
+        </div>
+        <div>
+          <div class="small">Candidatas/os</div>
+          <div class="n" id="kpi-cands">—</div>
+        </div>
+        <div>
+          <div class="small">Sesiones</div>
+          <div class="n" id="kpi-ses">1</div>
+        </div>
+      </div>
+      <div class="kpi">
+        <div class="small">Marca</div>
+        <img src="assets/logos/LOGO2.png" alt="Tesãi" style="height:40px;filter:drop-shadow(0 0 12px rgba(123,97,255,.6))"/>
+      </div>
+    </section>
+
+    <main>
+      <!-- NOTI -->
+      <section id="view-noti">
+        <div class="videoWrap">
+          <h2 class="title">NOTI DEPORTES</h2>
+          <p class="small">Colocá tu video en <code>assets/videos/noti.mp4</code>. Si no hay video, verás un aviso.</p>
+          <div id="video-holder"></div>
+        </div>
+      </section>
+
+      <!-- VOTAR -->
+      <section id="view-votar" class="hidden">
+        <h2 class="title">Votá tu favorito/a</h2>
+        <p class="small">Un voto por dispositivo. La lista se carga en tiempo real desde Supabase.</p>
+        <div id="grid-candidatos" class="grid"></div>
+      </section>
+
+      <!-- RESULTADOS -->
+      <section id="view-resultados" class="hidden">
+        <h2 class="title">Resultados</h2>
+        <div class="chartWrap">
+          <canvas id="chart"></canvas>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn" id="btn-refresh">Actualizar</button>
+            <button class="btn" id="btn-csv">Exportar votos (CSV)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- EQUIPOS -->
+      <section id="view-equipos" class="hidden">
+        <h2 class="title">Equipos participantes</h2>
+        <div class="equiposWrap">
+          <div id="equipos-list" class="grid"></div>
+          <p class="notice">Cargá tus equipos en la tabla <code>public.equipos</code>. Si no hay datos, verás esta nota.</p>
+        </div>
+      </section>
+
+      <!-- AYUDA -->
+      <section id="view-ayuda" class="hidden">
+        <h2 class="title">Ayuda</h2>
+        <ul class="small">
+          <li>Logos: <code>assets/logos/LOGO1.png</code> y <code>LOGO2.png</code>.</li>
+          <li>Video semanal: <code>assets/videos/noti.mp4</code>.</li>
+          <li>Candidatos: tabla <code>public.candidatos</code> (id, nombre, foto).</li>
+          <li>Votos: tabla <code>public.votos</code> (id, candidato_id, dispositivo, fecha).</li>
+          <li>Equipos: tabla <code>public.equipos</code> (libre, se muestra como tarjetas).</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="footer">© Comité de Deportes - Fundación Tesãi</footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
