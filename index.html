@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Copa Tesäí — Votación</title>
   <link rel="stylesheet" href="styles.css" />
+  <meta name="color-scheme" content="dark light" />
 </head>
 <body>
   <header class="container">
     <h2>Copa Tesäí <span class="highlight">Tecnología</span> + Deporte</h2>
 
-    <!-- Píldoras superiores -->
+    <!-- Píldoras / Tabs: el JS escucha la clase .tabs -->
     <nav class="pills tabs">
       <button class="pill pill-active" aria-current="page">Noti Deportes</button>
-      <!-- estas tres SÍ son las que usa tu JS -->
       <button class="pill tab" data-view="votar">Votación</button>
       <button class="pill tab" data-view="resultados">Resultados</button>
-      <!-- visual: no afecta al JS -->
       <button class="pill">Equipos</button>
-      <!-- esta SÍ la usa tu JS -->
       <button class="pill tab" data-view="ayuda">Ayuda</button>
     </nav>
   </header>
@@ -38,30 +36,29 @@
         <div class="small">Sesiones</div>
         <div class="big" id="kpi-ses">1</div>
       </div>
-      <!-- Marca (solo visual) -->
       <div class="kpi">
         <div class="small">Marca</div>
         <div class="big brand" id="kpi-marca">—</div>
       </div>
     </section>
 
-    <!-- NOTI DEPORTES (vista inicial, no manejada por JS) -->
+    <!-- ============ Vista inicial libre (no controlada por JS) ============ -->
     <section class="panel">
       <h3>NOTI DEPORTES</h3>
       <p>Colocá tu video en <code>assets/videos/noti.mp4</code>. Si no hay video, verás un aviso.</p>
 
       <div class="video-box">
-        <!-- si subís el archivo, esto se verá automáticamente -->
+        <!-- Si subís el archivo, descomentá la línea de abajo -->
         <!-- <video src="assets/videos/noti.mp4" controls playsinline></video> -->
         <div class="video-empty">
           Sin video cargado. Reemplazá <code>assets/videos/noti.mp4</code> con tu archivo.
         </div>
       </div>
 
-      <footer class="foot">© Comité de Deportes · Fundación Tesäi</footer>
+      <footer class="foot">© Comité de Deportes · Fundación Tesäí</footer>
     </section>
 
-    <!-- ===== VISTAS manejadas por app.js ===== -->
+    <!-- ================== Vistas manejadas por app.js =================== -->
 
     <!-- Votar -->
     <div id="view-votar" class="hidden">
@@ -80,10 +77,16 @@
 
     <!-- Ayuda -->
     <div id="view-ayuda" class="hidden">
-      <p>Elegí tu favorito/a y presioná “Votar”. Un dispositivo = un voto.</p>
+      <h3>Ayuda</h3>
+      <ul class="list-compact">
+        <li><span>Elegí tu favorita/o y tocá “Votar”.</span><span></span></li>
+        <li><span>Un dispositivo = un voto (se guarda un ID local).</span><span></span></li>
+        <li><span>Los resultados se actualizan en tiempo real.</span><span></span></li>
+      </ul>
     </div>
   </main>
 
+  <!-- Tu app -->
   <script type="module" src="./app.js"></script>
 </body>
 </html>
