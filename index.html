@@ -3,17 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Copa Tesãí — Votación</title>
+  <title>Copa Tesäí — Votación</title>
+
+  <!-- Estilos -->
   <link rel="stylesheet" href="styles.css" />
+  <!-- (Opcional) Favicon
+  <link rel="icon" href="assets/favicon.png" />
+  -->
 </head>
 <body>
   <header class="container">
-    <h1>Copa Tesãí</h1>
-    <h2><span class="highlight">Tecnología</span> + Deporte</h2>
-    <nav class="tabs">
-      <button class="tab active" data-view="votar">Votación</button>
-      <button class="tab" data-view="resultados">Resultados</button>
-      <button class="tab" data-view="ayuda">Ayuda</button>
+    <h2>Copa Tesäí <span class="highlight">Tecnología</span> + Deporte</h2>
+
+    <!-- Píldoras superiores -->
+    <nav class="pills">
+      <button class="pill pill-active" aria-current="page">Noti Deportes</button>
+      <!-- estas tres SÍ son las que usa tu JS -->
+      <button class="pill tab" data-view="votar">Votación</button>
+      <button class="pill tab" data-view="resultados">Resultados</button>
+      <!-- visual: no afecta al JS -->
+      <button class="pill">Equipos</button>
+      <!-- esta SÍ la usa tu JS -->
+      <button class="pill tab" data-view="ayuda">Ayuda</button>
     </nav>
   </header>
 
@@ -22,54 +33,65 @@
     <section class="kpis">
       <div class="kpi">
         <div class="small">Votos registrados</div>
-        <div class="n" id="kpi-votos">0</div>
+        <div class="big" id="kpi-votos">—</div>
       </div>
       <div class="kpi">
         <div class="small">Candidatas/os</div>
-        <div class="n" id="kpi-cands">0</div>
+        <div class="big" id="kpi-cands">—</div>
       </div>
       <div class="kpi">
         <div class="small">Sesiones</div>
-        <div class="n" id="kpi-ses">1</div>
+        <div class="big" id="kpi-ses">1</div>
+      </div>
+      <!-- Marca (solo visual) -->
+      <div class="kpi">
+        <div class="small">Marca</div>
+        <div class="big brand" id="kpi-marca">—</div>
       </div>
     </section>
 
-    <!-- Vista: votar -->
-    <section id="view-votar">
-      <h3>Votá tu favorito/a</h3>
+    <!-- NOTI DEPORTES (vista inicial, no manejada por JS) -->
+    <section class="panel">
+      <h3>NOTI DEPORTES</h3>
+      <p>Colocá tu video en <code>assets/videos/noti.mp4</code>. Si no hay video, verás un aviso.</p>
+
+      <div class="video-box">
+        <!-- Si subís el archivo, descomentá la línea de abajo -->
+        <!-- <video src="assets/videos/noti.mp4" controls playsinline></video> -->
+        <div class="video-empty">
+          Sin video cargado. Reemplazá <code>assets/videos/noti.mp4</code> con tu archivo.
+        </div>
+      </div>
+
+      <footer class="foot">© Comité de Deportes · Fundación Tesäi</footer>
+    </section>
+
+    <!-- ===== VISTAS manejadas por app.js ===== -->
+
+    <!-- Votar -->
+    <div id="view-votar" class="hidden">
       <p class="sub">Un voto por dispositivo. La lista se carga en tiempo real desde Supabase.</p>
 
-      <div id="cards" class="grid"></div>
+      <div id="error" class="error hidden"><span id="error-msg">Error</span></div>
+      <div id="ok" class="ok hidden">¡Voto registrado con éxito!</div>
 
-      <div id="error" class="error" hidden>
-        <strong>Error al cargar candidatos:</strong>
-        <span id="error-msg"></span>
-      </div>
-      <div id="ok" class="ok" hidden>
-        ✅ ¡Voto registrado!
-      </div>
-    </section>
+      <section id="cards" class="grid"></section>
+    </div>
 
-    <!-- Vista: resultados (simple) -->
-    <section id="view-resultados" class="hidden">
-      <h3>Resultados (conteo rápido)</h3>
+    <!-- Resultados -->
+    <div id="view-resultados" class="hidden">
       <ul id="lista-resultados" class="list-compact"></ul>
-    </section>
+    </div>
 
-    <!-- Vista: ayuda -->
-    <section id="view-ayuda" class="hidden">
-      <h3>Ayuda</h3>
-      <ol>
-        <li>Elegí una candidata/o y tocá “Votar”.</li>
-        <li>Solo se permite 1 voto por dispositivo.</li>
-        <li>Las imágenes deben estar en <code>assets/img/</code> y el campo <code>foto</code> de la tabla <code>candidatos</code> debe coincidir (ej: <code>Ada.png</code>).</li>
-      </ol>
-      <p class="foot">© Comité de Deportes - Fundación Tesãi</p>
-    </section>
+    <!-- Ayuda -->
+    <div id="view-ayuda" class="hidden">
+      <p>Elegí tu favorito/a y presioná “Votar”. Un dispositivo = un voto.</p>
+    </div>
   </main>
 
   <!-- App -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
+
 
