@@ -24,12 +24,13 @@ document.querySelector(".tabs").addEventListener("click", (e) => {
   if (b.dataset.view === "resultados") loadResultados();
 });
 
-// ======= Device ID (para 1 voto por dispositivo; nivel básico) =======
+// ======= Device ID (para 1 voto por dispositivo) =======
 function getDeviceId() {
-  let id = localStorage.getItem("device_id");
+  const KEY = "device_id";
+  let id = localStorage.getItem(KEY);
   if (!id) {
     id = crypto.randomUUID();
-    localStorage.setItem("device_id", id);
+    localStorage.setItem(KEY, id);
   }
   return id;
 }
@@ -68,6 +69,7 @@ async function loadCandidatos() {
   for (const c of data) {
     const card = document.createElement("div");
     card.className = "card";
+
     const img = document.createElement("img");
     img.src = `assets/img/${c.foto}`;
     img.alt = c.nombre;
@@ -96,62 +98,74 @@ async function votar(candidato_id) {
   voting = true;
   hideMsg();
 
-  // comprobación simple por localStorage (cliente)
+  // Doble protección del lado cliente
   if (localStorage.getItem("ya_voto") === "1") {
     showErr("Este dispositivo ya emitió un voto.");
     voting = false;
     return;
   }
 
+  // Validación mínima
+  const cand = String(candidato_id || "").trim();
+  if (!cand) {
+    showErr("Candidato inválido.");
+    voting = false;
+    return;
+  }
+
   const row = {
-    fecha: new Date().toISOString(),
-    candidato_id: String(candidato_id),
+    fecha: new Date().toISOString(),     // si la BD tiene default now(), esto es opcional
+    candidato_id: cand,
     dispositivo: DEVICE_ID,
   };
 
   const { error } = await supabase.from("votos").insert(row);
+
   if (error) {
-    showErr(error.message);
+    // 23505 = índice único (ya votó este dispositivo)
+    if (error.code === "23505") {
+      localStorage.setItem("ya_voto", "1");
+      showErr("Este dispositivo ya realizó su voto.");
+    } else {
+      showErr("Error al registrar el voto. Intenta de nuevo.");
+      console.error(error);
+    }
   } else {
     localStorage.setItem("ya_voto", "1");
     showOk();
     await loadKPIs();
     await loadResultados();
   }
+
   voting = false;
 }
 
-// ======= Resultados (conteo rápido) =======
+// ======= Resultados (agregado en DB, súper liviano) =======
 async function loadResultados() {
-  const { data: votos, error: ev } = await supabase.from("votos").select("candidato_id");
-  const { data: cands, error: ec } = await supabase.from("candidatos").select("id, nombre");
   const ul = document.getElementById("lista-resultados");
   ul.innerHTML = "";
 
-  if (ev || ec) {
+  // Leemos directamente la vista agregada creada en SQL: public.resultados_view
+  const { data, error } = await supabase
+    .from("resultados_view")
+    .select("candidato_id, nombre, votos")
+    .order("votos", { ascending: false })
+    .order("nombre", { ascending: true });
+
+  if (error) {
+    console.error(error);
     ul.innerHTML = `<li>Error al cargar resultados</li>`;
     return;
   }
 
-  // conteo
-  const map = new Map();
-  for (const c of cands) map.set(String(c.id), { nombre: c.nombre, votos: 0 });
-  for (const v of votos) {
-    const k = String(v.candidato_id);
-    if (map.has(k)) map.get(k).votos++;
-  }
-
-  // render
-  [...map.values()]
-    .sort((a, b) => b.votos - a.votos || a.nombre.localeCompare(b.nombre))
-    .forEach(r => {
-      const li = document.createElement("li");
-      li.textContent = r.nombre;
-      const span = document.createElement("span");
-      span.textContent = r.votos;
-      li.appendChild(span);
-      ul.appendChild(li);
-    });
+  data.forEach(r => {
+    const li = document.createElement("li");
+    li.textContent = r.nombre;
+    const span = document.createElement("span");
+    span.textContent = r.votos;
+    li.appendChild(span);
+    ul.appendChild(li);
+  });
 }
 
 // ======= Mensajes =======
@@ -170,7 +184,9 @@ function showOk() {
 // ======= Init =======
 (async function init() {
   // tabs por data-view
-  document.querySelectorAll(".tab").forEach(b => (b.dataset.view = b.textContent.trim().toLowerCase()));
+  document.querySelectorAll(".tab").forEach(
+    b => (b.dataset.view = b.textContent.trim().toLowerCase())
+  );
   await loadKPIs();
   await loadCandidatos();
 })();
