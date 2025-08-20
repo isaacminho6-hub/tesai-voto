@@ -1,156 +1,177 @@
-// aplicación.js
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+// app.js
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/esm/supabase.js";
 
-// === CONFIG SUPABASE ===
-const SUPABASE_URL = 'https://jlsledoyvbjqzmikfase.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc2xlZG95dmJpcXptaWtmYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MjIwOTQsImV4cCI6MjA3MTE5ODA5NH0.EMCOh87jgSZAwN1uoiemQr_D6ixwwvCF_ZY6xYzpIO0'
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+// ======= Config Supabase (tuyas) =======
+const SUPABASE_URL  = "https://jlsledoyvbjqzmikfase.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc2xlZG95dmJpcXptaWtmYXNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MjIwOTQsImV4cCI6MjA3MTE5ODA5NH0.EMCOh87jgSZAwN1uoiemQr_D6ixwwvCF_ZY6xYzpIO0";
+// ======================================
 
-// Helpers
-const $ = sel => document.querySelector(sel)
-const fmt = n => new Intl.NumberFormat('es').format(n ?? 0)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// Render de candidatos
-async function cargarCandidatos() {
-  const cont = $('#lista-candidatos')
-  const errorBox = $('#error')
+// ======= Vistas (tabs) =======
+const views = {
+  votar: document.getElementById("view-votar"),
+  resultados: document.getElementById("view-resultados"),
+  ayuda: document.getElementById("view-ayuda"),
+};
+document.querySelector(".tabs").addEventListener("click", (e) => {
+  const b = e.target.closest(".tab");
+  if (!b) return;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  b.classList.add("active");
+  Object.values(views).forEach(v => v.classList.add("hidden"));
+  views[b.dataset.view].classList.remove("hidden");
+  if (b.dataset.view === "resultados") loadResultados();
+});
 
-  cont.innerHTML = ''
-  errorBox.textContent = ''
+// ======= Device ID (para 1 voto por dispositivo; nivel básico) =======
+function getDeviceId() {
+  let id = localStorage.getItem("device_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("device_id", id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
+
+// ======= KPIs =======
+async function loadKPIs() {
+  const votosCount = await supabase.from("votos").select("*", { count: "exact", head: true });
+  const candsCount = await supabase.from("candidatos").select("*", { count: "exact", head: true });
+
+  document.getElementById("kpi-votos").textContent = votosCount.count ?? "0";
+  document.getElementById("kpi-cands").textContent = candsCount.count ?? "0";
+  document.getElementById("kpi-ses").textContent = "1";
+}
+
+// ======= Cargar candidatos y render tarjetas =======
+async function loadCandidatos() {
+  hideMsg();
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
 
   const { data, error } = await supabase
-    .from('candidatos')
-    .select('id, nombre, foto')
-    .order('nombre', { ascending: true })
+    .from("candidatos")
+    .select("id, nombre, foto")
+    .order("nombre", { ascending: true });
 
   if (error) {
-    errorBox.textContent = `Error al cargar candidatos: ${error.message}`
-    return
+    showErr(`TypeError: ${error.message}`);
+    return;
   }
-
-  if (!data || data.length === 0) {
-    cont.innerHTML = '<p>No hay candidatas/os cargados.</p>'
-    return
+  if (!data || !data.length) {
+    showErr("No hay candidatos para mostrar.");
+    return;
   }
-
-  // grilla
-  const grid = document.createElement('div')
-  grid.style.display = 'grid'
-  grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(180px, 1fr))'
-  grid.style.gap = '16px'
 
   for (const c of data) {
-    const card = document.createElement('div')
-    card.className = 'card'
-    card.style.background = '#111824'
-    card.style.border = '1px solid #243048'
-    card.style.borderRadius = '12px'
-    card.style.overflow = 'hidden'
-    card.style.boxShadow = '0 6px 14px rgba(0,0,0,.25)'
+    const card = document.createElement("div");
+    card.className = "card";
+    const img = document.createElement("img");
+    img.src = `assets/img/${c.foto}`;
+    img.alt = c.nombre;
 
-    const img = document.createElement('img')
-    img.src = `assets/img/${c.foto}`
-    img.alt = c.nombre
-    img.style.width = '100%'
-    img.style.aspectRatio = '1/1'
-    img.style.objectFit = 'cover'
-    img.loading = 'lazy'
+    const body = document.createElement("div");
+    body.className = "body";
+    body.innerHTML = `<h4>${c.nombre}</h4>`;
 
-    const body = document.createElement('div')
-    body.style.padding = '12px'
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = "Votar";
+    btn.onclick = () => votar(c.id);
 
-    const h4 = document.createElement('h4')
-    h4.textContent = c.nombre
-    h4.style.margin = '0 0 8px 0'
-
-    const btn = document.createElement('button')
-    btn.textContent = 'Votar'
-    btn.className = 'btn btn-primary'
-    btn.style.width = '100%'
-    btn.style.padding = '10px 12px'
-    btn.style.borderRadius = '8px'
-    btn.style.border = '1px solid #3d59c6'
-    btn.style.background = '#3d59c6'
-    btn.style.color = 'white'
-    btn.style.cursor = 'pointer'
-
-    btn.addEventListener('click', () => votar(c.id, btn))
-
-    body.appendChild(h4)
-    body.appendChild(btn)
-    card.appendChild(img)
-    card.appendChild(body)
-    grid.appendChild(card)
-  }
-
-  cont.appendChild(grid)
-}
-
-function getDeviceId(){
-  let id = localStorage.getItem('device_id')
-  if(!id){
-    id = (crypto.randomUUID?.() || Math.random().toString(36).slice(2)) + String(Math.random()).slice(2)
-    localStorage.setItem('device_id', id)
-  }
-  return id
-}
-
-async function votar(candidato_id, button){
-  try{
-    button.disabled = true
-    button.textContent = 'Enviando...'
-
-    const dispositivo = getDeviceId()
-
-    // Verificar si ya votó este dispositivo
-    const { data: ya, error: e1 } = await supabase
-      .from('votos')
-      .select('id', { count: 'exact', head: true })
-      .eq('dispositivo', dispositivo)
-
-    if (e1) throw e1
-    if ((ya ?? 0) > 0) {
-      alert('Ya registraste un voto desde este dispositivo.')
-      button.textContent = 'Votar'
-      button.disabled = false
-      return
-    }
-
-    const { error: e2 } = await supabase.from('votos').insert({
-      fecha: new Date().toISOString(),
-      candidato_id,
-      dispositivo
-    })
-    if (e2) throw e2
-
-    button.textContent = '¡Voto registrado!'
-    await cargarKPIs()
-    await cargarResultadosPreview() // opcional si tenés un resumen
-  } catch(err){
-    console.error(err)
-    alert('Error al registrar el voto.')
-    button.textContent = 'Votar'
-    button.disabled = false
+    body.appendChild(btn);
+    card.appendChild(img);
+    card.appendChild(body);
+    cards.appendChild(card);
   }
 }
 
-// KPIs (totales)
-async function cargarKPIs(){
-  const [votosRes, candsRes] = await Promise.all([
-    supabase.from('votos').select('*', { count: 'exact', head: true }),
-    supabase.from('candidatos').select('*', { count: 'exact', head: true })
-  ])
-  $('#total-votos').textContent = fmt(votosRes.count ?? 0)
-  $('#total-candidatos').textContent = fmt(candsRes.count ?? 0)
-  $('#total-sesiones').textContent = '1' // simple, si usás otra métrica cambiá aquí
+// ======= Votar =======
+let voting = false;
+
+async function votar(candidato_id) {
+  if (voting) return;
+  voting = true;
+  hideMsg();
+
+  // comprobación simple por localStorage (cliente)
+  if (localStorage.getItem("ya_voto") === "1") {
+    showErr("Este dispositivo ya emitió un voto.");
+    voting = false;
+    return;
+  }
+
+  const row = {
+    fecha: new Date().toISOString(),
+    candidato_id: String(candidato_id),
+    dispositivo: DEVICE_ID,
+  };
+
+  const { error } = await supabase.from("votos").insert(row);
+  if (error) {
+    showErr(error.message);
+  } else {
+    localStorage.setItem("ya_voto", "1");
+    showOk();
+    await loadKPIs();
+    await loadResultados();
+  }
+  voting = false;
 }
 
-// (opcional) resultados rápidos
-async function cargarResultadosPreview(){
-  // Podés dejarlo en blanco si todavía no mostrás resultados
+// ======= Resultados (conteo rápido) =======
+async function loadResultados() {
+  const { data: votos, error: ev } = await supabase.from("votos").select("candidato_id");
+  const { data: cands, error: ec } = await supabase.from("candidatos").select("id, nombre");
+  const ul = document.getElementById("lista-resultados");
+  ul.innerHTML = "";
+
+  if (ev || ec) {
+    ul.innerHTML = `<li>Error al cargar resultados</li>`;
+    return;
+  }
+
+  // conteo
+  const map = new Map();
+  for (const c of cands) map.set(String(c.id), { nombre: c.nombre, votos: 0 });
+  for (const v of votos) {
+    const k = String(v.candidato_id);
+    if (map.has(k)) map.get(k).votos++;
+  }
+
+  // render
+  [...map.values()]
+    .sort((a, b) => b.votos - a.votos || a.nombre.localeCompare(b.nombre))
+    .forEach(r => {
+      const li = document.createElement("li");
+      li.textContent = r.nombre;
+      const span = document.createElement("span");
+      span.textContent = r.votos;
+      li.appendChild(span);
+      ul.appendChild(li);
+    });
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-  await cargarKPIs()
-  await cargarCandidatos()
-})
+// ======= Mensajes =======
+function hideMsg() {
+  document.getElementById("error").hidden = true;
+  document.getElementById("ok").hidden = true;
+}
+function showErr(msg) {
+  document.getElementById("error-msg").textContent = msg;
+  document.getElementById("error").hidden = false;
+}
+function showOk() {
+  document.getElementById("ok").hidden = false;
+}
+
+// ======= Init =======
+(async function init() {
+  // tabs por data-view
+  document.querySelectorAll(".tab").forEach(b => (b.dataset.view = b.textContent.trim().toLowerCase()));
+  await loadKPIs();
+  await loadCandidatos();
+})();
+
